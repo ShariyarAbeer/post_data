@@ -3,18 +3,37 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-Future<Album> createAlbum(String title) async {
+// https://reqres.in/api/users
+
+// Request
+// /api/users
+
+// {
+//     "name": "morpheus",
+//     "job": "leader"
+// }
+
+// Response
+// 201
+
+// {
+//     "name": "morpheus",
+//     "job": "leader",
+//     "id": "695",
+//     "createdAt": "2021-07-11T06:03:53.683Z"
+// }
+
+Future<Album> createAlbum(String title, String body) async {
   final response = await http.post(
-    Uri.parse('https://jsonplaceholder.typicode.com/albums'),
+    Uri.parse('https://reqres.in/api/users'),
     headers: <String, String>{
       'Content-Type': 'application/json; charset=UTF-8',
     },
-    body: jsonEncode(<String, String>{
-      'title': title,
-    }),
+    body: jsonEncode(<String, String>{'name': title, 'job': body}),
   );
 
   if (response.statusCode == 201) {
+    print(response.body);
     // If the server did return a 201 CREATED response,
     // then parse the JSON.
     return Album.fromJson(jsonDecode(response.body));
@@ -28,13 +47,15 @@ Future<Album> createAlbum(String title) async {
 class Album {
   final int id;
   final String title;
+  final String body;
 
-  Album({@required this.id, @required this.title});
+  Album({@required this.id, @required this.title, @required this.body});
 
   factory Album.fromJson(Map<String, dynamic> json) {
     return Album(
       id: json['id'],
-      title: json['title'],
+      title: json['name'],
+      body: json['job'],
     );
   }
 }
@@ -48,6 +69,7 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   final TextEditingController _controller = TextEditingController();
+  final TextEditingController _controller2 = TextEditingController();
   Future<Album> _futureAlbum;
 
   @override
@@ -72,10 +94,14 @@ class _HomeState extends State<Home> {
           controller: _controller,
           decoration: InputDecoration(hintText: 'Enter Title'),
         ),
+        TextField(
+          controller: _controller2,
+          decoration: InputDecoration(hintText: 'Enter body'),
+        ),
         ElevatedButton(
           onPressed: () {
             setState(() {
-              _futureAlbum = createAlbum(_controller.text);
+              _futureAlbum = createAlbum(_controller.text, _controller2.text);
             });
           },
           child: Text('Create Data'),
@@ -90,7 +116,13 @@ class _HomeState extends State<Home> {
       builder: (context, snapshot) {
         if (snapshot.hasData) {
           print(snapshot.data.title);
-          return Text(snapshot.data.title);
+          print(snapshot.data.body);
+          return Column(
+            children: [
+              Text(snapshot.data.title.toString()),
+              Text(snapshot.data.body.toString())
+            ],
+          );
         } else if (snapshot.hasError) {
           return Text('${snapshot.error}');
         }
